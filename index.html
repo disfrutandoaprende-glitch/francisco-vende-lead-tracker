@@ -1,0 +1,2581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lead Tracker — Francisco Vende</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --yellow: #D4A800;
+      --yellow-bg: #FFF8DC;
+      --yellow-border: #F5C400;
+      --black: #0D0D0D;
+      --gray: #F5F5F5;
+      --gray-mid: #FAFAFA;
+      --gray-light: #E5E5E5;
+      --muted: #999;
+      --white: #FFF;
+      --text: #111;
+      --hot: #E03E1A;
+      --warm: #C49000;
+      --cold: #999;
+      --skip: #CCC;
+      --green: #1A9E52;
+    }
+    body { font-family: 'Poppins', sans-serif; background: #F7F7F7; color: var(--text); min-height: 100vh; }
+
+    /* HEADER */
+    header {
+      padding: 32px 40px 24px;
+      background: var(--white);
+      border-bottom: 2px solid var(--yellow-border);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    header h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+    header h1 span { color: var(--yellow); }
+    .header-meta { font-size: 12px; color: var(--muted); }
+    .header-meta strong { color: var(--text); }
+
+    /* FILTERS */
+    .filters {
+      padding: 16px 40px;
+      background: var(--white);
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+      border-bottom: 1px solid var(--gray-light);
+    }
+    .filter-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-right: 4px; }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 100px; border: 1px solid var(--gray-light);
+      background: transparent; color: var(--text); font-family: 'Poppins', sans-serif;
+      font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s;
+    }
+    .filter-btn:hover { border-color: var(--yellow-border); color: var(--yellow); }
+    .filter-btn.active { background: var(--yellow-border); color: var(--black); border-color: var(--yellow-border); font-weight: 700; }
+
+    /* STATS BAR */
+    .stats {
+      display: flex; gap: 2px; padding: 0 40px 0;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-light);
+    }
+    .stat {
+      flex: 1; padding: 14px 20px; background: var(--gray);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .stat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .stat-dot.hot { background: var(--hot); }
+    .stat-dot.warm { background: var(--warm); }
+    .stat-dot.skip { background: var(--cold); }
+    .stat-count { font-size: 22px; font-weight: 900; }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* TABLE */
+    .table-wrap { padding: 24px 40px 48px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; background: var(--white); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    thead th {
+      text-align: left; padding: 12px 16px;
+      font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); background: var(--gray); border-bottom: 1px solid var(--gray-light);
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--gray-light);
+      transition: background .1s;
+      cursor: default;
+    }
+    tbody tr:hover { background: #FFFBEE; }
+    tbody tr.hidden { display: none; }
+    td { padding: 14px 16px; font-size: 13px; vertical-align: middle; color: var(--text); }
+
+    /* SCORE BADGE */
+    .score {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700;
+      white-space: nowrap;
+    }
+    .score.hot { background: #FFF0ED; color: #D03A18; border: 1px solid #FFCFC5; }
+    .score.warm { background: #FFFBDC; color: #9A7200; border: 1px solid #F5C400; }
+    .score.cold { background: #F5F5F5; color: var(--muted); border: 1px solid var(--gray-light); }
+
+    /* COMPANY */
+    .company-name { font-weight: 600; font-size: 13px; margin-bottom: 2px; color: var(--text); }
+    .company-sub { font-size: 11px; color: var(--muted); }
+
+    /* INSTAGRAM */
+    .ig-link { color: #C13584; font-size: 12px; font-weight: 500; text-decoration: none; }
+    .ig-link:hover { text-decoration: underline; }
+
+    /* METRICS */
+    .metric-row { display: flex; gap: 12px; }
+    .metric { text-align: center; }
+    .metric-val { font-size: 14px; font-weight: 700; }
+    .metric-val.good { color: var(--green); }
+    .metric-val.bad { color: #FF5B2E; }
+    .metric-val.neutral { color: var(--white); }
+    .metric-lbl { font-size: 10px; color: var(--muted); }
+
+    /* RATIO BAR */
+    .ratio-wrap { display: flex; flex-direction: column; gap: 4px; min-width: 100px; }
+    .ratio-label { font-size: 10px; color: var(--muted); }
+    .ratio-bar-bg { background: var(--gray-light); border-radius: 4px; height: 6px; width: 100%; }
+    .ratio-bar-fill { height: 6px; border-radius: 4px; }
+    .ratio-val { font-size: 11px; font-weight: 600; }
+    .ratio-val.very-bad { color: #FF5B2E; }
+    .ratio-val.bad { color: #FF8C5B; }
+    .ratio-val.ok { color: var(--yellow); }
+    .ratio-val.good { color: var(--green); }
+
+    /* SIGNAL */
+    .signal-text { font-size: 12px; color: #555; line-height: 1.5; max-width: 200px; }
+
+    /* CONTACT */
+    .contact-item { font-size: 12px; display: flex; align-items: center; gap: 6px; color: #444; margin-bottom: 3px; }
+    .contact-item a { color: var(--yellow); text-decoration: none; }
+    .contact-item a:hover { text-decoration: underline; }
+    .no-contact { font-size: 11px; color: var(--muted); }
+
+    /* STATUS SELECTOR */
+    .status-select {
+      background: var(--white); border: 1px solid var(--gray-light); color: var(--text);
+      font-family: 'Poppins', sans-serif; font-size: 11px; padding: 4px 8px; border-radius: 6px;
+      cursor: pointer; outline: none;
+    }
+    .status-select:focus { border-color: var(--yellow-border); }
+
+    /* DEMO PRIORITY */
+    .demo-badge {
+      display: inline-block; background: var(--yellow-border); color: var(--black);
+      font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* TIKTOK */
+    .tiktok-tag { font-size: 11px; color: #69C9D0; font-weight: 500; }
+    .no-tiktok { font-size: 11px; color: var(--gray-light); }
+
+    /* DIVIDER ROW */
+    .divider-row td {
+      background: var(--gray); color: var(--muted);
+      font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      padding: 8px 16px; border-top: 2px solid var(--gray-light);
+    }
+
+    /* TIKTOK DIVIDER */
+    .tiktok-divider td {
+      background: #F5FFFE;
+      color: #00796B;
+      border-top: 2px solid #B2DFDB;
+    }
+
+    /* COUNTRY ROW */
+    .country-row td { 
+      background: #F7F7F7 !important; 
+      border-top: 1px solid var(--gray-light);
+    }
+    .ig-divider td {
+      background: #F0F8FF;
+      color: #3366AA;
+      border-top: 2px solid #CCE0FF;
+    }
+
+    @media (max-width: 768px) {
+      header, .filters, .stats, .table-wrap { padding-left: 16px; padding-right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Lead Tracker — <span>Francisco Vende</span></h1>
+    <p class="header-meta">Google Maps · <strong>15</strong> &nbsp;+&nbsp; Instagram · <strong>45</strong> &nbsp;+&nbsp; TikTok Guatemala · <strong>37 leads nuevos</strong> · <strong>10 junio 2026</strong></p>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">DEMO META</div>
+    <div style="font-size:20px;font-weight:900;color:var(--yellow)">1 demo / día</div>
+    <div style="font-size:11px;color:var(--muted)">Premiere + After Effects</div>
+  </div>
+</header>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-dot hot"></div>
+    <div>
+      <div class="stat-count">59</div>
+      <div class="stat-label">Hot — demo urgente</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-dot warm"></div>
+    <div>
+      <div class="stat-count">30</div>
+      <div class="stat-label">Warm — outreach esta semana</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-dot skip"></div>
+    <div>
+      <div class="stat-count">8</div>
+      <div class="stat-label">Skip — no aplican</div>
+    </div>
+  </div>
+  <div class="stat" style="border-left:1px solid var(--gray-light)">
+    <div>
+      <div class="stat-count" style="color:var(--yellow)">12</div>
+      <div class="stat-label">Demos asignados (#6-#12)</div>
+    </div>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <span class="filter-label">Filtrar:</span>
+  <button class="filter-btn active" onclick="filterLeads('all', this)">Todos</button>
+  <button class="filter-btn" onclick="filterLeads('hot', this)">🔥 Hot</button>
+  <button class="filter-btn" onclick="filterLeads('warm', this)">⚡ Warm</button>
+  <button class="filter-btn" onclick="filterLeads('skip', this)">❌ Skip</button>
+  <button class="filter-btn" onclick="filterLeads('demo', this)">🎬 Con demo pendiente</button>
+  <button class="filter-btn" onclick="filterLeads('guatemala', this)">🇬🇹 Solo Guatemala</button>
+  <button class="filter-btn" onclick="filterLeads('tiktok', this)">🎵 Solo TikTok</button>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <table id="leadsTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Score</th>
+        <th>Empresa</th>
+        <th>Instagram</th>
+        <th>Seguidores</th>
+        <th>Posts</th>
+        <th>Ratio seg/post</th>
+        <th>TikTok</th>
+        <th>Señal de compra</th>
+        <th>Contacto</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- DIVIDER HOT -->
+      <tr class="divider-row" data-score="hot">
+        <td colspan="11">🔥 HOT — Demo esta semana, mayor oportunidad</td>
+      </tr>
+
+      <!-- 1. SANTANDER -->
+      <tr data-score="hot" data-demo="true">
+        <td style="color:var(--muted);font-weight:700">1</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #1</span></td>
+        <td>
+          <div class="company-name">Inmobiliaria Santander Guatemala</div>
+          <div class="company-sub">30+ años de experiencia · Zona 14</div>
+        </td>
+        <td><a class="ig-link" href="https://www.instagram.com/inmobiliariasantanderguatemala" target="_blank">@inmobiliariasantanderguatemala</a></td>
+        <td><div class="metric"><div class="metric-val neutral">2,422</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val bad">51</div><div class="metric-lbl">posts</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:95%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">47.5 seg/post</div>
+            <div class="ratio-label">Alta audiencia, poca publicación</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">@inmobiliariasantander<br/>31 videos</span></td>
+        <td><div class="signal-text">2,422 seguidores con solo 51 posts — tienen audiencia pero no la están usando. Llevan 30 años en el negocio y casi no publican en Instagram.</div></td>
+        <td>
+          <div class="contact-item">📧 <a href="mailto:santanderinmobiliaria@gmail.com">santanderinmobiliaria@gmail.com</a></div>
+          <div class="contact-item">📞 <a href="tel:+50254078329">+502 5407-8329</a></div>
+        </td>
+        <td><select class="status-select"><option>Pendiente</option><option>Demo en producción</option><option>Demo enviado</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+
+      <!-- 2. DC INVERSIONES -->
+      <tr data-score="hot" data-demo="true">
+        <td style="color:var(--muted);font-weight:700">2</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #2</span></td>
+        <td>
+          <div class="company-name">DC Inversiones Inmobiliarias</div>
+          <div class="company-sub">14 años de experiencia · Zona 15 · Afiliados CBR</div>
+        </td>
+        <td><a class="ig-link" href="https://www.instagram.com/dcinversionesinmobiliarias.gt" target="_blank">@dcinversionesinmobiliarias.gt</a></td>
+        <td><div class="metric"><div class="metric-val bad">140</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val neutral">529</div><div class="metric-lbl">posts</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:5%;background:#FF5B2E"></div></div>
+            <div class="ratio-val very-bad">0.26 seg/post</div>
+            <div class="ratio-label">Publican mucho, no crecen nada</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">@dc.inversiones.in<br/>0 videos</span></td>
+        <td><div class="signal-text">529 posts y solo 140 seguidores — el peor ratio de la lista. Están haciendo esfuerzo pero el contenido no funciona. Caso perfecto para demostrar el cambio.</div></td>
+        <td>
+          <div class="contact-item">📧 <a href="mailto:info@dcinversionesinmobiliarias.com">info@dcinversionesinmobiliarias.com</a></div>
+        </td>
+        <td><select class="status-select"><option>Pendiente</option><option>Demo en producción</option><option>Demo enviado</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+
+      <!-- 3. MUNDO INMOBILIARIO -->
+      <tr data-score="hot" data-demo="true">
+        <td style="color:var(--muted);font-weight:700">3</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #3</span></td>
+        <td>
+          <div class="company-name">Mundo Inmobiliario Guatemala</div>
+          <div class="company-sub">Zona 4 · Compra, venta y renta</div>
+        </td>
+        <td><a class="ig-link" href="https://www.instagram.com/mundoinmobiliariogt" target="_blank">@mundoinmobiliariogt</a></td>
+        <td><div class="metric"><div class="metric-val bad">788</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val neutral">1,276</div><div class="metric-lbl">posts</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:8%;background:#FF5B2E"></div></div>
+            <div class="ratio-val very-bad">0.62 seg/post</div>
+            <div class="ratio-label">Muy activos, crecimiento mínimo</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Sin TikTok</span></td>
+        <td><div class="signal-text">1,276 posts con 788 seguidores — llevan años publicando sin resultados. Tienen contacto directo disponible, fácil de alcanzar.</div></td>
+        <td>
+          <div class="contact-item">📧 <a href="mailto:contacto@mundoinmobiliario.com.gt">contacto@mundoinmobiliario.com.gt</a></div>
+          <div class="contact-item">📞 <a href="tel:+50242044900">+502 4204-4900</a></div>
+        </td>
+        <td><select class="status-select"><option>Pendiente</option><option>Demo en producción</option><option>Demo enviado</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+
+      <!-- DIVIDER WARM -->
+      <tr class="divider-row" data-score="warm">
+        <td colspan="11">⚡ WARM — Demo esta semana si el tiempo lo permite</td>
+      </tr>
+
+      <!-- 4. MARKET PROPERTIES -->
+      <tr data-score="warm" data-demo="true">
+        <td style="color:var(--muted);font-weight:700">4</td>
+        <td><span class="score warm">⚡ Warm</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #4</span></td>
+        <td>
+          <div class="company-name">Market Properties</div>
+          <div class="company-sub">Zonas 9, 10, 13, 14, 15, 16 · Carretera El Salvador</div>
+        </td>
+        <td><a class="ig-link" href="https://www.instagram.com/marketpropertiesgt" target="_blank">@marketpropertiesgt</a></td>
+        <td><div class="metric"><div class="metric-val neutral">1,235</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val neutral">302</div><div class="metric-lbl">posts</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:30%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">4.1 seg/post</div>
+            <div class="ratio-label">Medio — pueden mejorar</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">@marketpropertiesgt<br/>65 videos</span></td>
+        <td><div class="signal-text">Ya están en TikTok (65 videos) — entienden el canal. Buen candidato para mostrar calidad de producción vs. lo que tienen ahora.</div></td>
+        <td>
+          <div class="no-contact">Sin contacto en datos</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Ver bio de Instagram</div>
+        </td>
+        <td><select class="status-select"><option>Pendiente</option><option>Demo en producción</option><option>Demo enviado</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+
+      <!-- 5. GRUPO IMMOBILIARE -->
+      <tr data-score="warm" data-demo="true">
+        <td style="color:var(--muted);font-weight:700">5</td>
+        <td><span class="score warm">⚡ Warm</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #5</span></td>
+        <td>
+          <div class="company-name">Grupo Immobiliare</div>
+          <div class="company-sub">10 años de experiencia · Certificaciones internacionales</div>
+        </td>
+        <td><a class="ig-link" href="https://www.instagram.com/grupoimmobiliare" target="_blank">@grupoimmobiliare</a></td>
+        <td><div class="metric"><div class="metric-val bad">705</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val neutral">256</div><div class="metric-lbl">posts</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:20%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">2.75 seg/post</div>
+            <div class="ratio-label">Bajo para 10 años de experiencia</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">@grupoimmobiliare<br/>89 videos</span></td>
+        <td><div class="signal-text">10 años en el negocio pero solo 705 seguidores — tienen trayectoria y credibilidad pero no la están comunicando bien en redes.</div></td>
+        <td>
+          <div class="contact-item">📧 <a href="mailto:info@grupoimmobiliare.com">info@grupoimmobiliare.com</a></div>
+        </td>
+        <td><select class="status-select"><option>Pendiente</option><option>Demo en producción</option><option>Demo enviado</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+
+      <!-- 6. REALTOR GUATEMALA -->
+      <tr data-score="warm">
+        <td style="color:var(--muted);font-weight:700">6</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Realtor Guatemala</div>
+          <div class="company-sub">realtorguate.com · Líderes Inmobiliarios</div>
+        </td>
+        <td><a class="ig-link" href="https://www.instagram.com/realtorguate" target="_blank">@realtorguate</a></td>
+        <td><div class="metric"><div class="metric-val neutral">931</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val neutral">800</div><div class="metric-lbl">posts</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:12%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1.16 seg/post</div>
+            <div class="ratio-label">800 posts y casi sin crecimiento</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Sin TikTok</span></td>
+        <td><div class="signal-text">Publican frecuente pero el ratio es muy bajo para la cantidad de posts. Sin TikTok aún — oportunidad de posicionarlos en el canal.</div></td>
+        <td>
+          <div class="no-contact">Sin contacto en datos</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Ver bio de Instagram o web</div>
+        </td>
+        <td><select class="status-select"><option>Pendiente</option><option>Demo en producción</option><option>Demo enviado</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+
+      <!-- 7. DELTA REAL ESTATE -->
+      <tr data-score="warm">
+        <td style="color:var(--muted);font-weight:700">7</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Delta Real Estate Guatemala</div>
+          <div class="company-sub">CC Los Próceres Z.10 · info@delta.gt</div>
+        </td>
+        <td><a class="ig-link" href="https://www.instagram.com/delta.realestate.gt" target="_blank">@delta.realestate.gt</a></td>
+        <td><div class="metric"><div class="metric-val neutral">1,638</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val neutral">3,135</div><div class="metric-lbl">posts</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:7%;background:#FF5B2E"></div></div>
+            <div class="ratio-val very-bad">0.52 seg/post</div>
+            <div class="ratio-label">3,135 posts con poco resultado</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Sin TikTok</span></td>
+        <td><div class="signal-text">3,135 posts pero solo 1,638 seguidores — están publicando demasiado sin estrategia. Rubro premium (zona 10), tienen presupuesto.</div></td>
+        <td>
+          <div class="contact-item">📧 <a href="mailto:info@delta.gt">info@delta.gt</a></div>
+          <div class="contact-item">📞 <a href="tel:+50222539749">+502 2253-9749</a></div>
+        </td>
+        <td><select class="status-select"><option>Pendiente</option><option>Demo en producción</option><option>Demo enviado</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+
+      <!-- DIVIDER SKIP -->
+      <tr class="divider-row" data-score="skip">
+        <td colspan="11">❌ SKIP — No aplican para el servicio</td>
+      </tr>
+
+      <!-- SKIPS -->
+      <tr data-score="skip">
+        <td style="color:var(--muted)">—</td>
+        <td><span class="score cold">❌ Skip</span></td>
+        <td><div class="company-name">HomesGuatemala</div><div class="company-sub">Demasiado grande</div></td>
+        <td><a class="ig-link" href="https://www.instagram.com/homesguatemala" target="_blank">@homesguatemala</a></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">50,211</div></div></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">3,300</div></div></td>
+        <td><span style="font-size:11px;color:var(--muted)">Ya establecidos</span></td>
+        <td><span class="no-tiktok">—</span></td>
+        <td><div class="signal-text" style="color:var(--muted)">50k seguidores — ya tienen equipo de marketing. No es cliente.</div></td>
+        <td><span class="no-contact">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">Archivado</span></td>
+      </tr>
+      <tr data-score="skip">
+        <td style="color:var(--muted)">—</td>
+        <td><span class="score cold">❌ Skip</span></td>
+        <td><div class="company-name">CityMax Guatemala</div><div class="company-sub">Franquicia con equipo</div></td>
+        <td><a class="ig-link" href="https://www.instagram.com/citymax_guatemala" target="_blank">@citymax_guatemala</a></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">2,546</div></div></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">2,074</div></div></td>
+        <td><span style="font-size:11px;color:var(--muted)">Franquicia</span></td>
+        <td><span class="tiktok-tag" style="opacity:.4">185 videos</span></td>
+        <td><div class="signal-text" style="color:var(--muted)">Franquicia internacional con equipo de marketing propio.</div></td>
+        <td><span class="no-contact">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">Archivado</span></td>
+      </tr>
+      <tr data-score="skip">
+        <td style="color:var(--muted)">—</td>
+        <td><span class="score cold">❌ Skip</span></td>
+        <td><div class="company-name">BienesInmuebles.TV</div><div class="company-sub">Media company</div></td>
+        <td><a class="ig-link" href="https://www.instagram.com/bitvgt" target="_blank">@bitvgt</a></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">5,850</div></div></td>
+        <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+        <td><span class="no-tiktok">—</span></td>
+        <td><div class="signal-text" style="color:var(--muted)">Medio de comunicación digital. No es cliente.</div></td>
+        <td><span class="no-contact">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">Archivado</span></td>
+      </tr>
+      <tr data-score="skip">
+        <td style="color:var(--muted)">—</td>
+        <td><span class="score cold">❌ Skip</span></td>
+        <td><div class="company-name">Cámara de Bienes Raices</div><div class="company-sub">Asociación gremial</div></td>
+        <td><a class="ig-link" href="https://www.instagram.com/cbrguatemala" target="_blank">@cbrguatemala</a></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">3,959</div></div></td>
+        <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+        <td><span class="no-tiktok">—</span></td>
+        <td><div class="signal-text" style="color:var(--muted)">Asociación del sector. No es cliente pero es buena fuente para encontrar miembros.</div></td>
+        <td><span class="no-contact">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">Archivado</span></td>
+      </tr>
+      <tr data-score="skip">
+        <td style="color:var(--muted)">—</td>
+        <td><span class="score cold">❌ Skip</span></td>
+        <td><div class="company-name">Idea Central</div><div class="company-sub">Desarrolladora inmobiliaria</div></td>
+        <td><a class="ig-link" href="https://www.instagram.com/ideacentralgt" target="_blank">@ideacentralgt</a></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">4,841</div></div></td>
+        <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+        <td><span class="no-tiktok">—</span></td>
+        <td><div class="signal-text" style="color:var(--muted)">Desarrolladora de proyectos. Modelo diferente — no encaja en el ICP.</div></td>
+        <td><span class="no-contact">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">Archivado</span></td>
+      </tr>
+      <tr data-score="skip">
+        <td style="color:var(--muted)">—</td>
+        <td><span class="score cold">❌ Skip</span></td>
+        <td><div class="company-name">Inmobiliarias Reunidas</div><div class="company-sub">Cuenta inactiva</div></td>
+        <td><a class="ig-link" href="https://www.instagram.com/inmobiliarias_reunidas" target="_blank">@inmobiliarias_reunidas</a></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">153</div></div></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">10</div></div></td>
+        <td><span style="font-size:11px;color:var(--muted)">Inactiva</span></td>
+        <td><span class="no-tiktok">—</span></td>
+        <td><div class="signal-text" style="color:var(--muted)">10 posts totales — cuenta prácticamente muerta.</div></td>
+        <td><span class="no-contact">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">Archivado</span></td>
+      </tr>
+      <tr data-score="skip">
+        <td style="color:var(--muted)">—</td>
+        <td><span class="score cold">❌ Skip</span></td>
+        <td><div class="company-name">Apoyo Seguro Inmobiliario</div><div class="company-sub">Sin actividad</div></td>
+        <td><a class="ig-link" href="https://www.instagram.com/asi.inmo" target="_blank">@asi.inmo</a></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">17</div></div></td>
+        <td><div class="metric"><div class="metric-val" style="color:var(--muted)">0</div></div></td>
+        <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+        <td><span class="no-tiktok">—</span></td>
+        <td><div class="signal-text" style="color:var(--muted)">0 posts, 17 seguidores — cuenta vacía.</div></td>
+        <td><span class="no-contact">—</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">Archivado</span></td>
+      </tr>
+
+      <tr class="divider-row ig-divider" data-score="hot">
+        <td colspan="11">📱 INSTAGRAM — 🔥 HOT · Agentes individuales</td>
+      </tr>
+      <tr class="country-row" data-score="hot" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🇬🇹 Guatemala</td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">16</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #6</span></td>
+        <td>
+          <div class="company-name">Realtor Guatemala</div>
+          <div class="company-sub">🇬🇹 Guatemala · Instagram · 931 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/realtorguate" target="_blank">@realtorguate</a></td>
+        <td><div class="metric"><div class="metric-val">931</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">800</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:3%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1.2 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · tiene video · engagement bajo (0.59%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🏠Líderes y Expertos Inmobiliarios.
+Nuestro Objetivo es que puedas Vender, Rentar y Comprar.
+Nosotros te asesoramos 📞55320155</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">17</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #7</span></td>
+        <td>
+          <div class="company-name">Juanjo Realtor</div>
+          <div class="company-sub">🇬🇹 Guatemala · Instagram · 255 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/juanjo.realtor" target="_blank">@juanjo.realtor</a></td>
+        <td><div class="metric"><div class="metric-val">255</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">80</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:10%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">3.2 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 5d · tiene video · engagement bajo (0.65%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🏡 Bienvenidos a nuestro rincón de bienes raíces! Descubre propiedades, consejos y tendencias para encontrar tu hogar ideal. ¡Explora con nosotros! ✨</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">18</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #8</span></td>
+        <td>
+          <div class="company-name">Gabriela Campos Realtor</div>
+          <div class="company-sub">🇬🇹 Guatemala · Instagram · 301 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/gabrielacampos_realtor" target="_blank">@gabrielacampos_realtor</a></td>
+        <td><div class="metric"><div class="metric-val">301</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">72</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:13%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">4.2 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="no-tiktok">Sin video</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 7d · engagement bajo (0.72%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Asesora Bienes Raices 🏡
+@inmobiliaria_pyg 
+📲4547-7137
+Guatemala City 🇬🇹</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/45477137" target="_blank">4547-7137</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">19</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #9</span></td>
+        <td>
+          <div class="company-name">InmoGuate</div>
+          <div class="company-sub">🇬🇹 Guatemala · Instagram · 2,012 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/inmoguatee" target="_blank">@inmoguatee</a></td>
+        <td><div class="metric"><div class="metric-val">2,012</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">567</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:11%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">3.5 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 15d · tiene video · engagement bajo (0.06%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Agente Inmobiliario Guatemala 
+Renta, Venta y Negociación de Inmuebles</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="country-row" data-score="hot" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🇸🇻 El Salvador</td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">20</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Goodlife El Salvador</div>
+          <div class="company-sub">🇸🇻 El Salvador · Instagram · 2,376 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/goodlifeelsalvador" target="_blank">@goodlifeelsalvador</a></td>
+        <td><div class="metric"><div class="metric-val">2,376</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">342</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:23%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">6.9 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · tiene video · engagement 2.2%</strong><br/><span style="color:var(--muted);font-size:11px">Real Estate Consultancy based in El Zonte, El Salvador. We make things possible! Message us to get in touch.
+Vacation Rentals @getawayselsalvador</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">21</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Pily Nolasco | Tu Realtor de El Salvador</div>
+          <div class="company-sub">🇸🇻 El Salvador · Instagram · 2,436 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/pilynolasco_realtor" target="_blank">@pilynolasco_realtor</a></td>
+        <td><div class="metric"><div class="metric-val">2,436</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">612</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:13%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">4.0 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 4d · tiene video · engagement 3.03%</strong><br/><span style="color:var(--muted);font-size:11px">🤝Ayudo a familias~Inversionistas~Hermanos lejanos en El Salvador
+🔝+20 experiencia
+🪧Compra~Venta~Renta propiedades
+✈️ Amo viajar & mar
+📲Contáctame 👇🏻</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="country-row" data-score="hot" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🇨🇷 Costa Rica</td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">22</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #10</span></td>
+        <td>
+          <div class="company-name">Samantha Flores | Costa Rica Realtor</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 9,733 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/samifloresa" target="_blank">@samifloresa</a></td>
+        <td><div class="metric"><div class="metric-val">9,733</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">19</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:100%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">512.3 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · tiene video · engagement bajo (0.77%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🏡 Te ayudo a buscar la casa de tus sueños 
+📲 +506 7252-8693
+🇨🇷 Costa Rica 
+🔑 Propiedades @floresa.realestate 
+Si lo puedes soñar, lo puedes crear ✨</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50672528693" target="_blank">+506 7252-8693</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">23</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">𝗜𝗻𝗴𝗿𝗶𝗱 𝗢𝗿𝘁𝗶𝘇🏠𝗥𝗲𝗮𝗹𝘁𝗼𝗿 @𝟮𝗖𝗼𝘀𝘁𝗮 𝗥𝗶𝗰𝗮 𝗥𝗲𝗮𝗹 𝗘𝘀𝘁𝗮𝘁𝗲</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 1,110 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/ingridortizcr" target="_blank">@ingridortizcr</a></td>
+        <td><div class="metric"><div class="metric-val">1,110</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">668</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:5%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1.7 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · tiene video · engagement bajo (0.47%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🔑 Real Estate Agent | 20 Years Experience 
+📊 Sharing knowledge to help you make informed decisions
+📲 Your dream home is just a call away</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">24</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">My Puerto Viejo Realtor</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 276 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/mypuertoviejorealtor" target="_blank">@mypuertoviejorealtor</a></td>
+        <td><div class="metric"><div class="metric-val">276</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">159</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:5%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1.7 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 3d · tiene video · engagement 2.05%</strong><br/><span style="color:var(--muted);font-size:11px">My Puerto Viejo Realtor - Costa Rica Real Estate 
+Titled Real Estate in Puerto Viejo & Cahuita  |  Ocean-view homes &  investments  |  Local Insight</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">25</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">CR Global Association of Realtors</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 1,438 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/crgar_costarica" target="_blank">@crgar_costarica</a></td>
+        <td><div class="metric"><div class="metric-val">1,438</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">177</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:27%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">8.1 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 4d · tiene video · engagement bajo (0.51%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">CRGAR is a leading real estate association in Costa Rica providing training for its Realtors & standards for professional conduct 🇨🇷</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">26</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Olmer Mena | Real Estate Costa Rica</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 431 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/olmer_mena_realtor" target="_blank">@olmer_mena_realtor</a></td>
+        <td><div class="metric"><div class="metric-val">431</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">41</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:35%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">10.5 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 5d · tiene video · engagement 2.4%</strong><br/><span style="color:var(--muted);font-size:11px">🔑 Helping you find the home of your dreams
+🏡 Over 10 years of experience
+📍 Specialist in properties in Osa, CR
+🔒 Protecting your investments</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">27</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Ricardo Guevara l Realtor de Costa Rica</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 248 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/ricardoguevara_realtorcr" target="_blank">@ricardoguevara_realtorcr</a></td>
+        <td><div class="metric"><div class="metric-val">248</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">29</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:28%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">8.6 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 5d · tiene video · engagement 2.89%</strong><br/><span style="color:var(--muted);font-size:11px">🤝 Ayudo a inversionistas a comprar propiedades de alto valor en Costa Rica 🌊🏝️
+25+ inversionistas satisfechos
+📩 Agenda tu asesoría ↓</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">28</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #11</span></td>
+        <td>
+          <div class="company-name">Pablo Ezequiel Mensegue Investment Costa Rica</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 2,596 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/pablo.e.mensegue.realtor" target="_blank">@pablo.e.mensegue.realtor</a></td>
+        <td><div class="metric"><div class="metric-val">2,596</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">778</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:11%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">3.3 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 11d · tiene video · engagement bajo (0.89%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🇨🇷 Certified Realtor Costa Rica
+🏝 Land • Luxury • Investments
+🤝 Safe buying process for foreigners
+📲 WhatsApp Direct
+      +506 8624 3284</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50686243284" target="_blank">+506 8624 3284</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">29</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Lisa Farrell | Papagayo Gulf, Costa Rica REALTOR®</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 1,947 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/papagayorealestate" target="_blank">@papagayorealestate</a></td>
+        <td><div class="metric"><div class="metric-val">1,947</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">194</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:33%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">10.0 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 36d · tiene video · engagement bajo (1.59%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Top Realtor @tresamigosrealty.group * Helping clients one home at a time * Playa Hermosa, Playas del Coco, Playa Panama, Ocotal & Peninsula Papagayo|</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="country-row" data-score="hot" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🇵🇦 Panamá</td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">30</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Chris Shelton - Realtor- Panama City FL</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 1,170 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/chrissheltonrealtor" target="_blank">@chrissheltonrealtor</a></td>
+        <td><div class="metric"><div class="metric-val">1,170</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">456</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:8%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">2.6 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · tiene video · engagement bajo (0.17%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Realtor</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">31</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Panama City Beach Real Estate • Beth Mulvey</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 1,738 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/panamacitybeachrealtor" target="_blank">@panamacitybeachrealtor</a></td>
+        <td><div class="metric"><div class="metric-val">1,738</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">661</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:8%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">2.6 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="no-tiktok">Sin video</span></td>
+        <td><div class="signal-text"><strong>Publicó ayer · engagement bajo (0.29%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Beach House Sales & Development 🌴 Owner • Realtor • 256.566.5482</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">32</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Joanne Hatch | Boquete Realtor</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 1,148 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/joannehatchpanama" target="_blank">@joannehatchpanama</a></td>
+        <td><div class="metric"><div class="metric-val">1,148</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">637</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:6%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1.8 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó ayer · tiene video · engagement bajo (1.39%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Joanne Hatch | Boquete Realtor
+🏆 #1 Sales Volume Panama 2025
+🏡 Luxury Homes • Estates • Land
+🌴 Boquete & Panama Relocation
+34+ Years Experience</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">33</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Fernando Panama | CO Springs | Realtor</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 623 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/fernandorealtor719" target="_blank">@fernandorealtor719</a></td>
+        <td><div class="metric"><div class="metric-val">623</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">39</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:53%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">16.0 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó ayer · tiene video · engagement bajo (0.75%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Tu nuevo REALTOR favorito 
+| Part of Springs HOME team |
+| eXp Realty |
+📍 CO SPRINGS</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">34</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Julia Paret | Realtor Panama City Fl</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 822 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/julyrealtor" target="_blank">@julyrealtor</a></td>
+        <td><div class="metric"><div class="metric-val">822</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">37</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:74%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">22.2 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 3d · tiene video · engagement bajo (1.14%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Tu sueño es mi misión!
+Asesoría | Compra | Venta
+📍Panamá City, Florida
+Contactame!</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">35</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Roger Rietsema 30a &amp; Panama City Beach REALTOR 🏝️</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 760 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/rogpcb" target="_blank">@rogpcb</a></td>
+        <td><div class="metric"><div class="metric-val">760</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">190</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:13%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">4.0 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 6d · tiene video · engagement bajo (0.39%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Panama City Beach Realtor®
+Luxury condos + coastal homes
+30A | PCB | Investment property
+sellfl.net</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">36</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Linda Anguizola -  Realtor en Panamá</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 731 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/lindaanguizola" target="_blank">@lindaanguizola</a></td>
+        <td><div class="metric"><div class="metric-val">731</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">225</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:10%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">3.2 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 6d · tiene video · engagement 5.06%</strong><br/><span style="color:var(--muted);font-size:11px">Licencia 1138</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">37</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Ashley Cutchins, Realtor - 30A | Panama City | PCB, FL</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 1,124 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/ashleycutchins_" target="_blank">@ashleycutchins_</a></td>
+        <td><div class="metric"><div class="metric-val">1,124</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">1,340</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:2%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">0.8 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 7d · tiene video · engagement bajo (1.44%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Realtor® | Miller & Associates Realty @titancontracting_co
+Wife | Mom | Dog Mom</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">38</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Panama City Fl Realtor | Home Prime Realty</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 331 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/zuleimarealtorfl" target="_blank">@zuleimarealtorfl</a></td>
+        <td><div class="metric"><div class="metric-val">331</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">69</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:15%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">4.8 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 11d · tiene video · engagement 2.52%</strong><br/><span style="color:var(--muted);font-size:11px">✨ Ayudando a la comunidad hispana a comprar su hogar
+🏡 Primeros compradores • Venta • Inversión
+📍 Florida Realtor</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">39</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Gysela González, Realtor, Panamá</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 725 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/gyselagonzalezrealtor" target="_blank">@gyselagonzalezrealtor</a></td>
+        <td><div class="metric"><div class="metric-val">725</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">144</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:16%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">5.0 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 14d · tiene video · engagement bajo (0.67%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Realtor 🇵🇦 | 20 años cerrando negocios
+Compra · Venta · Alquiler en Panamá
+Atención personalizada de inicio a cierre
+ACOBIR MLS | Lic. PN-1216
+📲</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">40</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #12</span></td>
+        <td>
+          <div class="company-name">ACOBIR | Gremio Inmobiliario</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 18,377 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/acobir.panama" target="_blank">@acobir.panama</a></td>
+        <td><div class="metric"><div class="metric-val">18,377</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">2,235</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:27%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">8.2 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 15d · tiene video · engagement bajo (0.29%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🌟Asociación Líder de Corredores y Promotores de Bienes Raíces #Panamá
+📲Whatsapp: 6451-6787 📞Llámanos: 228-7840
+🌐Cuentas:@expoacobir @mlsacobir</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/64516787" target="_blank">6451-6787</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">41</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Camilo Cortes | Panama Luxury Realtor</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 5,291 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/grupopreicpanama" target="_blank">@grupopreicpanama</a></td>
+        <td><div class="metric"><div class="metric-val">5,291</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">982</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:17%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">5.4 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 32d · tiene video · engagement bajo (0.21%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🌆 Apartamentos exclusivos en Panamá
+🏝 Costa del Este • Punta Pacífica • Santa María
+📲 Compra • Venta • Alquiler
+👇 Agenda tu asesoría aquí</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="country-row" data-score="hot" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🌎 Centroamérica</td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">42</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">A.A.L inmobiliarios</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 5,510 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/aal.inmobiliarios" target="_blank">@aal.inmobiliarios</a></td>
+        <td><div class="metric"><div class="metric-val">5,510</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">338</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:54%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">16.3 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó ayer · tiene video · engagement bajo (0.34%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Avalúos - Asesoría legal inmobiliaria 🇻🇪🇪🇦🇺🇸 Gestionamos tus propiedades
+🏘Compra-venta de inmuebles
+🏘Sucesiones
+🏘Actualización de documentos</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">43</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">GABRIEL ROMERO | ASESOR INMOBILIARIO</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 4,193 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/gabrielr.asesorinmobiliario" target="_blank">@gabrielr.asesorinmobiliario</a></td>
+        <td><div class="metric"><div class="metric-val">4,193</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">236</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:59%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">17.8 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó ayer · tiene video · engagement bajo (0.31%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🏢 Corredor de Propiedades | Santiago
+🏡 Encuentra tu nuevo hogar 
+🤝 Atención real
+☕️ Siempre con café y disposición</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">44</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Diana Solorzano Propiedades</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 3,077 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/punto_inmobiliariogt" target="_blank">@punto_inmobiliariogt</a></td>
+        <td><div class="metric"><div class="metric-val">3,077</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">1,178</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:8%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">2.6 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó ayer · tiene video · engagement bajo (0.17%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">📍 Guatemala
+Amamos el Real estate.
+Ahora somos parte de Realtrust Fusión Inmobiliaria 
+Punto Inmobiliario by Realtrust</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">45</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Olinda Parra</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 4,484 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/olindaparra_inmobiliario" target="_blank">@olindaparra_inmobiliario</a></td>
+        <td><div class="metric"><div class="metric-val">4,484</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">2,432</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:6%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1.8 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="no-tiktok">Sin video</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 2d · engagement bajo (0.06%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🫱🏻‍🫲🏾Asesora Inmobiliaria con atención de primera
+🏠Servicio de Venta, Compra y Alquiler de Inmuebles
+🔑Locales
+🔐Terrenos
+Contacto en el link ⤵️</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">46</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">miltonvargas2</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 3,910 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/miltonvargas2_inmobiliario" target="_blank">@miltonvargas2_inmobiliario</a></td>
+        <td><div class="metric"><div class="metric-val">3,910</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">3,559</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:3%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1.1 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 2d · tiene video · engagement bajo (0.06%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🏠 inmobiliario 🏠</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">47</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Circuito Inmobiliario</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 2,003 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/circuito_inmobiliario" target="_blank">@circuito_inmobiliario</a></td>
+        <td><div class="metric"><div class="metric-val">2,003</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">694</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:9%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">2.9 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 8d · tiene video · engagement bajo (1.51%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Un canal sobre el mundo inmobiliario
+Conducido por @gerardo.villalobosp y @carolina_hernandez_schettino</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">48</td>
+        <td><span class="score hot">🔥 Hot</span></td>
+        <td>
+          <div class="company-name">Francisco Torres | Negocios Inmobiliarios.</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 1,941 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/asesortorres" target="_blank">@asesortorres</a></td>
+        <td><div class="metric"><div class="metric-val">1,941</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">156</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:41%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">12.4 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 44d · tiene video · engagement bajo (0.02%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Bienes raíces
+📈Asesor Inmobiliario🤝
+🏢Venta, compra y alquiler de inmuebles.
+🌎Estado Lara🇻🇪.</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="divider-row ig-divider" data-score="warm">
+        <td colspan="11">📱 INSTAGRAM — ⚡ WARM · Agentes individuales</td>
+      </tr>
+      <tr class="country-row" data-score="warm" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🇨🇷 Costa Rica</td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">49</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Rosella Brenes | Realtor Costa Rica</div>
+          <div class="company-sub">🇨🇷 Costa Rica · Instagram · 460 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/rosellarealtor" target="_blank">@rosellarealtor</a></td>
+        <td><div class="metric"><div class="metric-val">460</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">7</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:100%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">65.7 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 60d · tiene video · engagement bajo (0.76%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Rosella Brenes
+Luxury Real Estate Consultant
+International REALTOR
+Papagayo | Guanacaste</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="country-row" data-score="warm" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🇵🇦 Panamá</td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">50</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Venus Bolton | VA Realtor, CIPE</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 1,201 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/panamama4" target="_blank">@panamama4</a></td>
+        <td><div class="metric"><div class="metric-val">1,201</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">2,191</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:1%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">0.5 seg/post</div>
+            <div class="ratio-label">Bajo para su tamaño</div>
+          </div></td>
+        <td><span class="no-tiktok">Sin video</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · engagement 2.35%</strong><br/><span style="color:var(--muted);font-size:11px">📍Serving Richmond Metro Region
+🏆 Richmond Top Producer 
+✨Certified Inherited Property Expert 
+🏡 Educate, Empower & Serve
+📱 804.467.5066</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">51</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Ernestina Suárez | Realtor Panamá</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 251 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/esuarez.realtor" target="_blank">@esuarez.realtor</a></td>
+        <td><div class="metric"><div class="metric-val">251</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">24</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:34%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">10.5 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="no-tiktok">Sin video</span></td>
+        <td><div class="signal-text"><strong>Último post hace 29d · engagement bajo (1.73%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🔑Agente Asociado 
+RE/MAX MILLENIUM 
+📍Panamá
+🏡Deseas vivir o invertir en Panamá? Te puedo ayudar
+📲Agenda tu asesoría personalizada al</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">52</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Dora Arosemena | Panama Real Estate &amp; Relocation</div>
+          <div class="company-sub">🇵🇦 Panamá · Instagram · 1,176 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/dora.panama.realtor" target="_blank">@dora.panama.realtor</a></td>
+        <td><div class="metric"><div class="metric-val">1,176</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">79</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:49%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">14.9 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 33d · tiene video · engagement 38.89%</strong><br/><span style="color:var(--muted);font-size:11px">Helping investors build wealth in 🇵🇦
+Realtor & Lawyer| PN4567 | ES · EN · FR · PT
+Pre-construction🏗️| Luxury Sales 🔑| DM for investment opportunities</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="country-row" data-score="warm" style="background:#FAFAFA">
+        <td colspan="11" style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--gray-light)">🌎 Centroamérica</td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">53</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">IVM. INMOBILIARIO &amp; NEGOCIOS</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 24,484 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/ivm.inmobiliario" target="_blank">@ivm.inmobiliario</a></td>
+        <td><div class="metric"><div class="metric-val">24,484</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">767</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:100%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">31.9 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · tiene video</strong><br/><span style="color:var(--muted);font-size:11px">IVM. Inmobiliario & Negocios
+Dedicada a la captacion de compra y venta de propiedades como casas, terreno, fincas; realizamos conexion directa.</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">54</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Reporte Inmobiliario</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 21,896 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/reporte.inmobiliario" target="_blank">@reporte.inmobiliario</a></td>
+        <td><div class="metric"><div class="metric-val">21,896</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">1,353</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:53%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">16.2 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hoy · tiene video · engagement bajo (0.07%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Plataforma digital de información y análisis independiente para la industria del Real Estate líder en el mercado.</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">55</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">InmobiliarioEc | Bienes Raíces</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 26,860 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/inmobiliarioec" target="_blank">@inmobiliarioec</a></td>
+        <td><div class="metric"><div class="metric-val">26,860</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">350</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:100%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">76.7 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 4d · tiene video · engagement bajo (0.04%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">🏡 Cumple el sueño de tener CASA PROPIA!</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">56</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Highland Servicios Inmobiliarios</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 6,329 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/highland.d.inmobiliarios" target="_blank">@highland.d.inmobiliarios</a></td>
+        <td><div class="metric"><div class="metric-val">6,329</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">80</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:100%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">79.1 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="no-tiktok">Sin video</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 4d · engagement bajo (0.15%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">Estamos para ayudarte y te ofrecemos un enfoque de confianza y seguridad para que cada paso que des sea hacia el éxito en tus proyectos inmobiliarios.</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">57</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Punto Inmobiliario</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 2,063 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/inmobiliariopy" target="_blank">@inmobiliariopy</a></td>
+        <td><div class="metric"><div class="metric-val">2,063</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">900</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:7%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">2.3 seg/post</div>
+            <div class="ratio-label">Promedio</div>
+          </div></td>
+        <td><span class="no-tiktok">Sin video</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 5d</strong><br/><span style="color:var(--muted);font-size:11px">Venta y Alquiler de Casas, Duplex, Departamentos, Salones Comerciales, Oficinas Corporativas, Depositos, Edificios, Terrenos, Administración en Gral.</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">58</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Constanza Cortés</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 5,042 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/asesoraconstanza" target="_blank">@asesoraconstanza</a></td>
+        <td><div class="metric"><div class="metric-val">5,042</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">128</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:100%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">39.4 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 15d · tiene video · engagement 9.26%</strong><br/><span style="color:var(--muted);font-size:11px">Te enseño a invertir                                                       CEO @raizurbanachile 
+📈 | Inversión inmobiliaria 
+💰 | Ing. Comercial</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">59</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Rosangela Mendoza | Asesor Inmobiliario | Bienes Raíces | Broker</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 6,500 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/asesoramendoza" target="_blank">@asesoramendoza</a></td>
+        <td><div class="metric"><div class="metric-val">6,500</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">914</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:23%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">7.1 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 46d · tiene video · engagement bajo (0.84%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">CEO  GRUPO MENDOZA
+🏠Venta y Alquiler de Apartamentos Casas Locales Oficinas Galpones en Valencia Maracay Tucacas - VENEZUELA
+SUEÑOS HECHOS REALIDAD 🏠💛</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="instagram">
+        <td style="color:var(--muted);font-weight:700">60</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">Tony Acosta | Inmobiliario en Utah</div>
+          <div class="company-sub">🌎 Centroamérica · Instagram · 11,156 seguidores</div>
+        </td>
+        <td><a class="ig-link" href="https://instagram.com/tony.inmobiliario" target="_blank">@tony.inmobiliario</a></td>
+        <td><div class="metric"><div class="metric-val">11,156</div><div class="metric-lbl">seguidores</div></div></td>
+        <td><div class="metric"><div class="metric-val">215</div><div class="metric-lbl">posts</div></div></td>
+        <td><div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:100%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">51.9 seg/post</div>
+            <div class="ratio-label">Buena audiencia</div>
+          </div></td>
+        <td><span class="tiktok-tag">Video ✓</span></td>
+        <td><div class="signal-text"><strong>Último post hace 54d · tiene video · engagement bajo (0.05%) → oportunidad</strong><br/><span style="color:var(--muted);font-size:11px">¿Comprar, vender o esperar? Te digo qué hacer.
+Ayudo a latinos en Utah a tomar decisiones claras 
+🏡 +300 familias servidas
+👇 Consultas Gratuitas</span></div></td>
+        <td><div class="no-contact">Ver bio en Instagram</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="divider-row tiktok-divider" data-score="hot">
+        <td colspan="11">🎵 TIKTOK GUATEMALA — 🔥 HOT · Agentes individuales</td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">61</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #13</span></td>
+        <td>
+          <div class="company-name">@bienesraicesmendez1</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@bienesraicesmendez1" target="_blank" style="color:#69C9D0">@bienesraicesmendez1</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">424,300</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:84%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">424,300 plays</div>
+            <div class="ratio-label">eng 0.9%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 1d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Casa propia en ganga en Xela ))))
+
+Aldea Siquila en San juan Onstuncalco Quetzaltenango 
+
+cuenta con</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50242995947" target="_blank">502 4299-5947</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">62</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #14</span></td>
+        <td>
+          <div class="company-name">@livingantigua</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 6 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@livingantigua" target="_blank" style="color:#69C9D0">@livingantigua</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">176,072</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">6</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:35%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">176,072 plays</div>
+            <div class="ratio-label">eng 5.1%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 1d · 6 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">$287,000 USD | 15 minutos de La Antigua Guatemala | 176 m2 de construcción | Código 160TR-CV
+
+•Distr</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50253141534" target="_blank">5314 1534</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">63</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #15</span></td>
+        <td>
+          <div class="company-name">@78marisol</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 4 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@78marisol" target="_blank" style="color:#69C9D0">@78marisol</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">65,150</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">4</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:13%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">65,150 plays</div>
+            <div class="ratio-label">eng 3.2%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (2)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 1d · 4 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Y tú cómo cliente, ¿qué dirías? 🫣 Para más información, contáctame directo al 5134-8268 📱 Nos ubicam</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50251348268" target="_blank">5134-8268</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">64</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #16</span></td>
+        <td>
+          <div class="company-name">@grupo.civica</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@grupo.civica" target="_blank" style="color:#69C9D0">@grupo.civica</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF8C5B">3,228</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:0%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">3,228 plays</div>
+            <div class="ratio-label">eng 1.3%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 1d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">PASEO SANTA LUCIA, tu casa en Santa Lucia Milpas Altas, a 5 minutos de la Antigua. 
+
+ #casas #reside</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">65</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #17</span></td>
+        <td>
+          <div class="company-name">@mt2realestate</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@mt2realestate" target="_blank" style="color:#69C9D0">@mt2realestate</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF8C5B">1,163</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:0%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1,163 plays</div>
+            <div class="ratio-label">eng 2.4%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 1d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Antigua Guatemala pero también eres exigente y amante del buen vivir , esta opción es para ti . ( Av</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50259153123" target="_blank">59153123</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">66</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #18</span></td>
+        <td>
+          <div class="company-name">@inmonortegt</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@inmonortegt" target="_blank" style="color:#69C9D0">@inmonortegt</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">58,300</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:11%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">58,300 plays</div>
+            <div class="ratio-label">eng 2.3%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 3d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">🐄🌿 De las mejores parcelas ganaderas disponibles en la región
+
+Si está buscando una propiedad lista </span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50248704894" target="_blank">4870-4894</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">67</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #19</span></td>
+        <td>
+          <div class="company-name">@ja.casas.guatemala</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 3 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@ja.casas.guatemala" target="_blank" style="color:#69C9D0">@ja.casas.guatemala</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">56,000</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">3</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:11%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">56,000 plays</div>
+            <div class="ratio-label">eng 2.4%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (3)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 6d · 3 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">@ʟᴀ ᴄᴀꜱᴀ ᴅ ᴛÚꜱ ꜱᴜᴇÑᴏꜱ ɢᴜᴀᴛᴇᴍᴀʟᴀ 
+#casasenventa 
+#sanjosepinula🇬🇹😀 
+🏡 Casa grande ubicada en hacienda</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50254794821" target="_blank">54794821</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">68</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #20</span></td>
+        <td>
+          <div class="company-name">@citymax_gtm</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@citymax_gtm" target="_blank" style="color:#69C9D0">@citymax_gtm</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">12,548</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:2%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">12,548 plays</div>
+            <div class="ratio-label">eng 2.6%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (2)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 6d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Desde USD $110,276 | AHIRA Apartamentos – Zona 15, Guatemala 🏙️🌿
+Clave interna: PVA-037-11-25
+
+Proye</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">69</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #21</span></td>
+        <td>
+          <div class="company-name">@realzapropiedadesgt</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@realzapropiedadesgt" target="_blank" style="color:#69C9D0">@realzapropiedadesgt</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF5B2E">951</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:0%;background:#FF5B2E"></div></div>
+            <div class="ratio-val very-bad">951 plays</div>
+            <div class="ratio-label">eng 2.5%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 6d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Precio de venta: Q825,000.00
+
+Apartamento en Altea Uno, zona 1, Guatemala.
+
+68 mts² con distribución</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50258307526" target="_blank">5830-7526</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">70</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #22</span></td>
+        <td>
+          <div class="company-name">@lesterpv02</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@lesterpv02" target="_blank" style="color:#69C9D0">@lesterpv02</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">59,500</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:11%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">59,500 plays</div>
+            <div class="ratio-label">eng 1.2%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 7d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Vendo hermoso terreno de 800 mts² (40 de frente x 20 de fondo), ubicado en Aldea Los Altos, Pachalum</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">71</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #23</span></td>
+        <td>
+          <div class="company-name">@cycguate</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 4 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@cycguate" target="_blank" style="color:#69C9D0">@cycguate</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">113,950</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">4</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:22%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">113,950 plays</div>
+            <div class="ratio-label">eng 1.7%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 8d · 4 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Casa nueva y moderna con jardín grande en venta
+
+📍 Condominio Arrazola Panorama 2
+
+Valor de venta: Q</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">72</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #24</span></td>
+        <td>
+          <div class="company-name">@andyfacundoo</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@andyfacundoo" target="_blank" style="color:#69C9D0">@andyfacundoo</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">69,450</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:13%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">69,450 plays</div>
+            <div class="ratio-label">eng 4.5%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 12d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Casa en VENTA en San Lucas Sacatepéquez casa de un nivel
+
+-3 parqueos
+-Sala con chimenea
+-Comedor
+-C</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50256315050" target="_blank">+502 5631-5050</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">73</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #25</span></td>
+        <td>
+          <div class="company-name">@gamalfuentes</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@gamalfuentes" target="_blank" style="color:#69C9D0">@gamalfuentes</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">22,200</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:4%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">22,200 plays</div>
+            <div class="ratio-label">eng 2.2%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (2)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 13d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">¡A solo 250 metros del mar! 🏖️✨ Tu terreno en Monterrico por solo Q155,000.
+
+¿Buscando el lugar perf</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50230763669" target="_blank">3076-3669</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">74</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #26</span></td>
+        <td>
+          <div class="company-name">@byron_vasquez00</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 3 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@byron_vasquez00" target="_blank" style="color:#69C9D0">@byron_vasquez00</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">21,600</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">3</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:4%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">21,600 plays</div>
+            <div class="ratio-label">eng 2.2%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (3)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 13d · 3 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">💥VENDO CASA EN CONDOMINIO BURGOS, LA ESPERANZA QUETZALTENANGO.
+Condominio con detalles coloniales, a</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50241204155" target="_blank">4120-4155</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">75</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #27</span></td>
+        <td>
+          <div class="company-name">@jessvu13</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@jessvu13" target="_blank" style="color:#69C9D0">@jessvu13</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">153,300</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:30%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">153,300 plays</div>
+            <div class="ratio-label">eng 7.9%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 14d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Q1,500 al mes!!! Has tuyo un lote de 8x16 en Lotificación los Jocotes, Zacapa. Escríbeme para más in</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50257602552" target="_blank">5760-2552</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">76</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #28</span></td>
+        <td>
+          <div class="company-name">@tephscomte</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@tephscomte" target="_blank" style="color:#69C9D0">@tephscomte</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">211,250</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:42%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">211,250 plays</div>
+            <div class="ratio-label">eng 2.3%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 15d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Para más información Cel. 5202-1628 #gt #guatemala #trending #fyp #bienesraices Casa en venta en zon</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50252021628" target="_blank">5202-1628</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">77</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #29</span></td>
+        <td>
+          <div class="company-name">@vivonorti</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@vivonorti" target="_blank" style="color:#69C9D0">@vivonorti</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">16,800</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:3%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">16,800 plays</div>
+            <div class="ratio-label">eng 2.1%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (2)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 15d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Venta de casa en zona 15 🏡Estás propiedades son de las que no se encuentran 🔎 Dentro de garita, cond</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">78</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #30</span></td>
+        <td>
+          <div class="company-name">@homesguatemala</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@homesguatemala" target="_blank" style="color:#69C9D0">@homesguatemala</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF8C5B">6,154</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:1%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">6,154 plays</div>
+            <div class="ratio-label">eng 3.2%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (2)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 15d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">✨ Las últimas casas disponibles en LUGANA 🌿💧
+
+Vive rodeado de naturaleza, laguna privada, senderos y</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">79</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #31</span></td>
+        <td>
+          <div class="company-name">@santander_bienes_raices</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@santander_bienes_raices" target="_blank" style="color:#69C9D0">@santander_bienes_raices</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF8C5B">1,082</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:0%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">1,082 plays</div>
+            <div class="ratio-label">eng 1.8%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 15d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">VENDO HERMOSA CASA LISTA PARA ESTRENAR!!!
+✨ ¡Excelente opción en ESTANZUELA, ZACAPA✨
+
+📍 Ubicada en u</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50277626418" target="_blank">7762-6418</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">80</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #32</span></td>
+        <td>
+          <div class="company-name">@emilioo8</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@emilioo8" target="_blank" style="color:#69C9D0">@emilioo8</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF8C5B">4,682</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:0%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">4,682 plays</div>
+            <div class="ratio-label">eng 3.0%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 19d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">🏡✨ Sé parte de nuestro proyecto en Residenciales Buenaventura Monjas 2
+
+💰 Lotes desde Q86,400
+🔥 Enga</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50252068766" target="_blank">5206-8766</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">81</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #33</span></td>
+        <td>
+          <div class="company-name">@guateconstrucciones.gt</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@guateconstrucciones.gt" target="_blank" style="color:#69C9D0">@guateconstrucciones.gt</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">55,500</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:11%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">55,500 plays</div>
+            <div class="ratio-label">eng 2.3%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 21d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">VENDO HERMOSA CASA
+📍Ubicada en Col. Metrópoli, Zacapa
+A tan solo 2 minutos de CC Pradera
+
+Imagina vi</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50230634673" target="_blank">3063-4673</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">82</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #34</span></td>
+        <td>
+          <div class="company-name">@kiercarquitectura</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@kiercarquitectura" target="_blank" style="color:#69C9D0">@kiercarquitectura</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">130,700</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:26%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">130,700 plays</div>
+            <div class="ratio-label">eng 1.8%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 25d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">DISEÑO DE CASA DE 1 NIVEL | 16.20m X 14m
+.
+#casadecampo👷🏻‍♀️🏠🌴☀️ #casadeunaplanta #planodecasas #gua</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50255018919" target="_blank">55018919</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="hot" data-demo="true" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">83</td>
+        <td><span class="score hot">🔥 Hot</span><br/><span class="demo-badge" style="margin-top:6px;display:inline-block">DEMO #35</span></td>
+        <td>
+          <div class="company-name">@pablo_razziru_</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@pablo_razziru_" target="_blank" style="color:#69C9D0">@pablo_razziru_</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">458,600</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:91%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">458,600 plays</div>
+            <div class="ratio-label">eng 2.9%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 39d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">🏡 **¡Tu nuevo hogar te espera!**
+
+Aprovecha esta excelente oportunidad de inversión en una **casa re</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50230531785" target="_blank">3053-1785</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr class="divider-row tiktok-divider" data-score="warm">
+        <td colspan="11">🎵 TIKTOK GUATEMALA — ⚡ WARM · Agentes individuales</td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">84</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@fabipropiedades</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@fabipropiedades" target="_blank" style="color:#69C9D0">@fabipropiedades</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">124,700</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:24%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">124,700 plays</div>
+            <div class="ratio-label">eng 2.7%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 1d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">💰 Q.480mil 
+📍Residencial Reservas de Minerva
+
+ #casasguatemala
+#bienesraicesguatemala
+#casasenventa
+</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">85</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@juanfi_h</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@juanfi_h" target="_blank" style="color:#69C9D0">@juanfi_h</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">39,350</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:7%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">39,350 plays</div>
+            <div class="ratio-label">eng 3.7%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 5d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Cetre, quinta avenida es el nuevo proyecto en zona 14 para entrega dentro de 34 meses enganche fracc</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">86</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@micasaenguate</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@micasaenguate" target="_blank" style="color:#69C9D0">@micasaenguate</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">33,200</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:6%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">33,200 plays</div>
+            <div class="ratio-label">eng 1.4%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 8d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">#guatemala #casasindividuales #ventadecasas #activosbanco #casasenventaguatemala </span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">87</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@nour_inmobiliaria</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@nour_inmobiliaria" target="_blank" style="color:#69C9D0">@nour_inmobiliaria</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF8C5B">4,954</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:0%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">4,954 plays</div>
+            <div class="ratio-label">eng 2.0%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 9d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">¿Qué es el POT?
+Plan de ordenamiento territorial
+
+¿Qué saber antes de comprar un terreno?
+
+#inmobili</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">88</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@felix.bienesraices</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@felix.bienesraices" target="_blank" style="color:#69C9D0">@felix.bienesraices</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">102,100</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:20%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">102,100 plays</div>
+            <div class="ratio-label">eng 4.6%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 10d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Respuesta a @oswaldo_chavez1 Ni 10, ni 20... ¡en 36 meses te entregamos tu terreno 100% listo para c</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">89</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@mariselarealestate7</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@mariselarealestate7" target="_blank" style="color:#69C9D0">@mariselarealestate7</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">54,100</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:10%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">54,100 plays</div>
+            <div class="ratio-label">eng 25.6%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 11d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">VENDO CASA TOTALMENTE NUEVA Y EQUIPADA.
+CONDOMINIO ENTRE FLORES. CIUDAD VIEJA SACATEPÉQUEZ A 10 MINU</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50259352316" target="_blank">59352316</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">90</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@asesora_inmobiliaria6</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@asesora_inmobiliaria6" target="_blank" style="color:#69C9D0">@asesora_inmobiliaria6</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">141,200</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:28%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">141,200 plays</div>
+            <div class="ratio-label">eng 1.3%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 14d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">#guatemala🇬🇹 #fly  #viral </span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">91</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@asesoradeventas_karina.g</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@asesoradeventas_karina.g" target="_blank" style="color:#69C9D0">@asesoradeventas_karina.g</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">49,000</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:9%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">49,000 plays</div>
+            <div class="ratio-label">eng 1.6%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 14d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Ubicados en Jutiapa 🏡 Cuotas mensuales desde Q.2,203 💰 invertir bien es invertir en un mejor futuro </span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50250269645" target="_blank">5026-9645</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">92</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@lasmargaritas.peten</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@lasmargaritas.peten" target="_blank" style="color:#69C9D0">@lasmargaritas.peten</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">87,300</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:17%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">87,300 plays</div>
+            <div class="ratio-label">eng 12.4%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 17d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">#CapCut #petenguatemala🇬🇹 #lotesenventa #terrenosenventa </span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">93</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@espacio.inmobiliariogt</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@espacio.inmobiliariogt" target="_blank" style="color:#69C9D0">@espacio.inmobiliariogt</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">24,300</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:4%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">24,300 plays</div>
+            <div class="ratio-label">eng 3.6%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 20d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">250 m² de Construcción en un terreno de 9m x 18 
+
+- 3 habitaciones 
+- 3.5 baños 
+- Garaje 
+- terraza</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">94</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@toprealestateantigua</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 6 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@toprealestateantigua" target="_blank" style="color:#69C9D0">@toprealestateantigua</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#2ECC71">66,250</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">6</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:13%;background:#2ECC71"></div></div>
+            <div class="ratio-val good">66,250 plays</div>
+            <div class="ratio-label">eng 4.2%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 35d · 6 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Esta casa es única ubicada a 8 km del parque central de Antigua Guatemala y te ofrece algo totalment</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">95</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@lacasadetussuenosgt</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@lacasadetussuenosgt" target="_blank" style="color:#69C9D0">@lacasadetussuenosgt</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">35,800</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:7%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">35,800 plays</div>
+            <div class="ratio-label">eng 2.2%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 44d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">🏡 Ven a conocer #lacasadetussuenos haz tu cita ahora en el WhatsApp +502 5044-3140 🏡💯
+
+#bienesraices</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50250443140" target="_blank">+502 5044-3140</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">96</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@rg_inmobiliaria_</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 2 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@rg_inmobiliaria_" target="_blank" style="color:#69C9D0">@rg_inmobiliaria_</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#FF8C5B">9,390</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">2</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:1%;background:#FF8C5B"></div></div>
+            <div class="ratio-val bad">9,390 plays</div>
+            <div class="ratio-label">eng 2.5%</div>
+          </div>
+        </td>
+        <td><span class="no-tiktok">Audio comercial</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 44d · 2 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">🇺🇸🏡 Aplica a tu casa desde Estados Unidos y haz realidad tu sueño en Guatemala ✨
+
+Si llevas más de 1</span></div></td>
+        <td><div class="contact-item">📲 <a href="https://wa.me/50249377272" target="_blank">+502 4937-7272</a></div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+      <tr data-score="warm" data-demo="false" data-source="tiktok">
+        <td style="color:var(--muted);font-weight:700">97</td>
+        <td><span class="score warm">⚡ Warm</span></td>
+        <td>
+          <div class="company-name">@henrydiazoficial</div>
+          <div class="company-sub">🇬🇹 Guatemala · TikTok · 1 videos encontrados</div>
+        </td>
+        <td><a class="ig-link" href="https://tiktok.com/@henrydiazoficial" target="_blank" style="color:#69C9D0">@henrydiazoficial</a></td>
+        <td>
+          <div class="metric"><div class="metric-val" style="color:#F5C400">41,600</div><div class="metric-lbl">avg plays</div></div>
+        </td>
+        <td><div class="metric"><div class="metric-val">1</div><div class="metric-lbl">videos</div></div></td>
+        <td>
+          <div class="ratio-wrap">
+            <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width:8%;background:#F5C400"></div></div>
+            <div class="ratio-val ok">41,600 plays</div>
+            <div class="ratio-label">eng 3.5%</div>
+          </div>
+        </td>
+        <td><span class="tiktok-tag">🎙️ Audio propio (1)</span></td>
+        <td><div class="signal-text"><strong>Publicó hace 49d · 1 video(s) de propiedades</strong><br/><span style="color:var(--muted);font-size:11px">Q2,300 | 3 habitaciones con aire acondicionado en Zacapa
+Agua incluida + cisterna (nunca te falta ag</span></div></td>
+        <td><div class="no-contact">Ver bio en TikTok</div></td>
+        <td><select class="status-select"><option>Pendiente</option><option>DM #1 enviado</option><option>Seguimiento #1</option><option>Respondió</option><option>No interesado</option><option>Cliente</option></select></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function filterLeads(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const rows = document.querySelectorAll('#leadsTable tbody tr');
+    rows.forEach(row => {
+      const score = row.dataset.score;
+      const isDemo = row.dataset.demo === 'true';
+      const isDivider = row.classList.contains('divider-row') || row.classList.contains('country-row');
+      const source = row.dataset.source || 'maps';
+      if (type === 'all') {
+        row.classList.remove('hidden');
+      } else if (type === 'demo') {
+        if (isDivider) { row.classList.add('hidden'); return; }
+        row.classList.toggle('hidden', !isDemo);
+      } else if (type === 'guatemala') {
+        if (isDivider) { row.classList.add('hidden'); return; }
+        const isGuate = source === 'maps' || (row.querySelector('.company-sub') && row.querySelector('.company-sub').textContent.includes('Guatemala'));
+        row.classList.toggle('hidden', !isGuate);
+      } else if (type === 'tiktok') {
+        if (isDivider) { row.classList.add('hidden'); return; }
+        row.classList.toggle('hidden', source !== 'tiktok');
+      } else {
+        if (isDivider) {
+          row.classList.toggle('hidden', score !== type);
+        } else {
+          row.classList.toggle('hidden', score !== type);
+        }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
