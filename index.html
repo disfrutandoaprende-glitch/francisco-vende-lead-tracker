@@ -2544,7 +2544,50 @@ Agua incluida + cisterna (nunca te falta ag</span></div></td>
   </table>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  const _sb = window.supabase.createClient(
+    'https://tumhakoucahcaoircwlg.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1bWhha291Y2FoY2FvaXJjd2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDU2MjEsImV4cCI6MjA5NjYyMTYyMX0.Cm8E8PjFnzWbNMUZSMqz_Y7XtTgj1FztVnfvzKAj9_Q'
+  );
+
+  async function _loadStatuses() {
+    const { data } = await _sb.from('lead_statuses').select('lead_id, status');
+    if (!data) return;
+    const map = {};
+    data.forEach(r => { map[r.lead_id] = r.status; });
+    document.querySelectorAll('.status-select[data-lead-id]').forEach(sel => {
+      const saved = map[sel.dataset.leadId];
+      if (saved) {
+        for (const opt of sel.options) {
+          if (opt.text === saved) { sel.value = opt.value; break; }
+        }
+      }
+    });
+  }
+
+  async function _saveStatus(leadId, status) {
+    await _sb.from('lead_statuses').upsert(
+      { lead_id: leadId, status, updated_at: new Date().toISOString() },
+      { onConflict: 'lead_id' }
+    );
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    document.querySelectorAll('#leadsTable tbody tr').forEach(row => {
+      if (row.classList.contains('divider-row') || row.classList.contains('country-row') ||
+          row.classList.contains('tiktok-divider') || row.classList.contains('ig-divider')) return;
+      const numCell = row.querySelector('td:first-child');
+      const leadId = parseInt(numCell?.textContent?.trim());
+      if (!leadId) return;
+      const sel = row.querySelector('.status-select');
+      if (!sel) return;
+      sel.dataset.leadId = leadId;
+      sel.addEventListener('change', () => _saveStatus(leadId, sel.value));
+    });
+    await _loadStatuses();
+  });
+
   function filterLeads(type, btn) {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
